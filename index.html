@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TI-84 Normal Distribution Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .calculator {
+            background-color: #f4f4f4;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        input, select, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        #result {
+            background-color: #e0e0e0;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>TI-84 Normal Distribution Calculator</h2>
+        
+        <label for="mode">Mode:</label>
+        <select id="mode">
+            <option value="normalcdf">normalcdf</option>
+            <option value="invNorm">invNorm</option>
+        </select>
+
+        <div id="normalcdfInputs">
+            <label>Lower Bound (left):</label>
+            <input type="number" id="left" placeholder="Enter lower bound">
+            
+            <label>Upper Bound (right):</label>
+            <input type="number" id="right" placeholder="Enter upper bound">
+            
+            <label>Mean (μ):</label>
+            <input type="number" id="mean" placeholder="Enter mean" value="0">
+            
+            <label>Standard Deviation (σ):</label>
+            <input type="number" id="stdDev" placeholder="Enter standard deviation" value="1">
+        </div>
+
+        <div id="invNormInputs" style="display:none;">
+            <label>Area (probability):</label>
+            <input type="number" id="area" placeholder="Enter area/probability" step="0.01" min="0" max="1">
+            
+            <label>Mean (μ):</label>
+            <input type="number" id="invNormMean" placeholder="Enter mean" value="0">
+            
+            <label>Standard Deviation (σ):</label>
+            <input type="number" id="invNormStdDev" placeholder="Enter standard deviation" value="1">
+        </div>
+
+        <button onclick="calculate()">Calculate</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Toggle input fields based on mode selection
+        document.getElementById('mode').addEventListener('change', function() {
+            const normalcdfInputs = document.getElementById('normalcdfInputs');
+            const invNormInputs = document.getElementById('invNormInputs');
+            
+            if (this.value === 'normalcdf') {
+                normalcdfInputs.style.display = 'block';
+                invNormInputs.style.display = 'none';
+            } else {
+                normalcdfInputs.style.display = 'none';
+                invNormInputs.style.display = 'block';
+            }
+        });
+
+        function calculate() {
+            const mode = document.getElementById('mode').value;
+            const resultDiv = document.getElementById('result');
+
+            try {
+                if (mode === 'normalcdf') {
+                    const left = parseFloat(document.getElementById('left').value);
+                    const right = parseFloat(document.getElementById('right').value);
+                    const mean = parseFloat(document.getElementById('mean').value);
+                    const stdDev = parseFloat(document.getElementById('stdDev').value);
+
+                    if (isNaN(left) || isNaN(right) || isNaN(mean) || isNaN(stdDev)) {
+                        throw new Error('Please enter valid numbers for all fields');
+                    }
+
+                    // Standardize and use math.js cumulative distribution function
+                    const zLeft = (left - mean) / stdDev;
+                    const zRight = (right - mean) / stdDev;
+                    
+                    const result = math.erf(zRight / Math.sqrt(2)) / 2 - 
+                                   math.erf(zLeft / Math.sqrt(2)) / 2;
+                    
+                    resultDiv.innerHTML = `
+                        <strong>normalcdf(${left}, ${right}, ${mean}, ${stdDev}):</strong><br>
+                        Probability = ${result.toFixed(6)}
+                    `;
+
+                } else if (mode === 'invNorm') {
+                    const area = parseFloat(document.getElementById('area').value);
+                    const mean = parseFloat(document.getElementById('invNormMean').value);
+                    const stdDev = parseFloat(document.getElementById('invNormStdDev').value);
+
+                    if (isNaN(area) || isNaN(mean) || isNaN(stdDev)) {
+                        throw new Error('Please enter valid numbers for all fields');
+                    }
+
+                    if (area < 0 || area > 1) {
+                        throw new Error('Area must be between 0 and 1');
+                    }
+
+                    // Inverse standard normal distribution using math.js
+                    const zScore = Math.sqrt(2) * math.erf.inv(2 * area - 1);
+                    const result = zScore * stdDev + mean;
+                    
+                    resultDiv.innerHTML = `
+                        <strong>invNorm(${area}, ${mean}, ${stdDev}):</strong><br>
+                        Value = ${result.toFixed(6)}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
